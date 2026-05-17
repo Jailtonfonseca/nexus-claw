@@ -64,12 +64,17 @@ class WorkerAgent:
         self.role = config.role
         self.status = WorkerStatus.IDLE
 
-        # Agente interno com memória própria
-        self._agent = NexusAgent(name=config.name)
+        # Prepara NexusConfig completo ANTES de criar o agente interno
+        from nexus_claw.config.settings import NexusConfig, load_config
+
+        node_config = load_config()
         if config.llm:
-            self._agent.config.llm = config.llm
+            node_config.llm = config.llm
         if config.memory:
-            self._agent.config.memory = config.memory
+            node_config.memory = config.memory
+
+        # Agente interno com configuração já completa
+        self._agent = NexusAgent(config=node_config, name=config.name)
 
         self._tasks_completed = 0
         self._total_tokens = 0

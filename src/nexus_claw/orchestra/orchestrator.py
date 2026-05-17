@@ -103,14 +103,25 @@ class OrchestratorAgent:
         description: str = "",
         system_prompt: str = "",
         autonomous: bool = False,
+        llm: Optional[Any] = None,
+        memory: Optional[Any] = None,
     ) -> WorkerAgent:
-        """Adiciona um novo worker ao sistema."""
+        """Adiciona um novo worker ao sistema.
+
+        Se llm/memory não forem fornecidos, carrega da config global.
+        """
+        from nexus_claw.config.settings import load_config
+
+        global_config = load_config()
+
         config = WorkerConfig(
             name=name,
             role=role,
             description=description,
             system_prompt=system_prompt,
             autonomous=autonomous,
+            llm=llm or global_config.llm,
+            memory=memory or global_config.memory,
         )
 
         worker = WorkerAgent(config)
