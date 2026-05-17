@@ -190,7 +190,7 @@ class OrchestratorAgent:
             task.error = result.error
 
             # Atualiza registro
-            self.registry.update_status(target_id, result.status)
+            self.registry.update_status(target_id, "completed" if result.success else "error")
             if result.success:
                 self.registry.increment_tasks(target_id)
         else:
