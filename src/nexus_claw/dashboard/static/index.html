@@ -156,14 +156,215 @@
 
       <!-- Settings View -->
       <div class="view" id="view-settings">
-        <div class="card">
-          <h3>⚙️ Configuração</h3>
-          <div class="config-section">
-            <label>Broadcast para todos os workers</label>
-            <div class="form-row">
-              <input type="text" id="broadcast-input" placeholder="Mensagem para todos os workers...">
-              <button class="btn btn-primary" onclick="broadcast()">Enviar</button>
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab="tab-llm" onclick="switchTab('tab-llm')">🤖 LLM</button>
+          <button class="tab" data-tab="tab-memory" onclick="switchTab('tab-memory')">🧠 Memória</button>
+          <button class="tab" data-tab="tab-agent" onclick="switchTab('tab-agent')">⚙️ Agente</button>
+          <button class="tab" data-tab="tab-system" onclick="switchTab('tab-system')">🖥️ Sistema</button>
+          <button class="tab" data-tab="tab-actions" onclick="switchTab('tab-actions')">📢 Ações</button>
+        </div>
+
+        <!-- Tab: LLM -->
+        <div class="tab-content active" id="tab-llm">
+          <div class="card">
+            <div class="tab-header">
+              <h3>🤖 Provedor de IA</h3>
+              <span class="tab-subtitle">Configure qual modelo de IA seus workers usarão</span>
             </div>
+
+            <div class="form-section">
+              <div class="form-group">
+                <label>Provedor</label>
+                <select id="cfg-llm-provider" onchange="onLLMProviderChange()">
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="ollama">Ollama (local)</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="google">Google (Gemini)</option>
+                  <option value="custom">Custom (OpenAI-compatível)</option>
+                </select>
+              </div>
+
+              <div class="form-group" id="cfg-llm-model-group">
+                <label>Modelo</label>
+                <div class="input-with-suggest">
+                  <input type="text" id="cfg-llm-model" placeholder="Ex: gpt-4o-mini, claude-3-sonnet...">
+                  <div class="model-suggestions" id="model-suggestions"></div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>API Key</label>
+                <div class="password-field">
+                  <input type="password" id="cfg-llm-apikey" placeholder="sk-... ou leave empty for Ollama">
+                  <button class="btn btn-icon btn-toggle-pass" onclick="togglePassword('cfg-llm-apikey')" title="Mostrar/Esconder">👁️</button>
+                </div>
+              </div>
+
+              <div class="form-group" id="cfg-llm-baseurl-group">
+                <label>Base URL (opcional)</label>
+                <input type="text" id="cfg-llm-baseurl" placeholder="Ex: https://api.openai.com/v1">
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Temperatura <span id="cfg-llm-temp-value">0.7</span></label>
+                  <input type="range" id="cfg-llm-temperature" min="0" max="2" step="0.1" value="0.7"
+                    oninput="document.getElementById('cfg-llm-temp-value').textContent = this.value">
+                </div>
+                <div class="form-group">
+                  <label>Max Tokens</label>
+                  <select id="cfg-llm-maxtokens">
+                    <option value="1024">1.024</option>
+                    <option value="2048">2.048</option>
+                    <option value="4096" selected>4.096</option>
+                    <option value="8192">8.192</option>
+                    <option value="16384">16.384</option>
+                    <option value="32768">32.768</option>
+                    <option value="65536">65.536</option>
+                    <option value="131072">131.072</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-secondary" onclick="testLLMConfig()">🔌 Testar Conexão</button>
+                <span id="cfg-llm-test-result" class="test-result"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Memory -->
+        <div class="tab-content" id="tab-memory">
+          <div class="card">
+            <div class="tab-header">
+              <h3>🧠 Memória Persistente</h3>
+              <span class="tab-subtitle">Configure como seus workers armazenam conhecimento</span>
+            </div>
+
+            <div class="form-section">
+              <div class="form-group">
+                <label>Backend de Armazenamento</label>
+                <select id="cfg-memory-backend">
+                  <option value="file">📁 Arquivos Markdown (padrão)</option>
+                  <option value="chroma">🔢 ChromaDB (vetorial)</option>
+                  <option value="sqlite">🗃️ SQLite</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Diretório Base</label>
+                <input type="text" id="cfg-memory-basedir" placeholder="~/.nexus/memory">
+              </div>
+
+              <div class="form-group">
+                <label>Modelo Vetorial (para ChromaDB)</label>
+                <input type="text" id="cfg-memory-vectormodel" placeholder="all-MiniLM-L6-v2">
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Máx. Arquivos de Contexto</label>
+                  <input type="number" id="cfg-memory-maxfiles" min="5" max="500" value="50">
+                </div>
+                <div class="form-group checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="cfg-memory-autosummarize" checked>
+                    <span>Auto-summarizar memória</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Agent -->
+        <div class="tab-content" id="tab-agent">
+          <div class="card">
+            <div class="tab-header">
+              <h3>⚙️ Agente Principal</h3>
+              <span class="tab-subtitle">Configurações gerais do sistema</span>
+            </div>
+
+            <div class="form-section">
+              <div class="form-group">
+                <label>Nome do Agente</label>
+                <input type="text" id="cfg-agent-name" placeholder="Nexus">
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Nível de Log</label>
+                  <select id="cfg-agent-loglevel">
+                    <option value="DEBUG">🐛 DEBUG</option>
+                    <option value="INFO" selected>ℹ️ INFO</option>
+                    <option value="WARNING">⚠️ WARNING</option>
+                    <option value="ERROR">❌ ERROR</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Intervalo (min) — modo autônomo</label>
+                  <input type="number" id="cfg-agent-wakeinterval" min="1" max="1440" value="30">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: System -->
+        <div class="tab-content" id="tab-system">
+          <div class="card">
+            <div class="tab-header">
+              <h3>🖥️ Informações do Sistema</h3>
+              <span class="tab-subtitle">Ambiente onde o NexusClaw está rodando</span>
+            </div>
+
+            <div class="sys-info" id="sys-info">
+              <div class="sys-row"><span class="sys-label">Carregando...</span><span class="sys-value"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Actions -->
+        <div class="tab-content" id="tab-actions">
+          <div class="card">
+            <div class="tab-header">
+              <h3>📢 Ações do Sistema</h3>
+              <span class="tab-subtitle">Comandos rápidos e broadcast</span>
+            </div>
+
+            <div class="form-section">
+              <div class="form-group">
+                <label>Broadcast para todos os workers</label>
+                <div class="form-row">
+                  <input type="text" id="broadcast-input" placeholder="Digite uma mensagem para todos os workers...">
+                  <button class="btn btn-primary" onclick="broadcast()">📢 Enviar</button>
+                </div>
+              </div>
+
+              <hr class="section-divider">
+
+              <div class="form-group">
+                <label>Ações Rápidas</label>
+                <div class="action-buttons">
+                  <button class="btn btn-secondary" onclick="restartOrchestrator()">🔄 Reiniciar Orquestrador</button>
+                  <button class="btn btn-secondary" onclick="reloadConfig()">📂 Recarregar Config</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Save -->
+        <div class="config-footer" id="config-footer">
+          <div class="config-footer-info">
+            <span id="config-status-msg">Configuração carregada</span>
+          </div>
+          <div class="config-footer-actions">
+            <button class="btn btn-secondary" onclick="loadConfig()">🔄 Descartar</button>
+            <button class="btn btn-primary btn-lg" onclick="saveConfig()">💾 Salvar Configuração</button>
           </div>
         </div>
       </div>
