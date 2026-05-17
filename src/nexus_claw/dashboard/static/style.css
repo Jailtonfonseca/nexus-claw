@@ -397,7 +397,7 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 0 0 8px 8px;
   max-height: 180px;
   overflow-y: auto;
-  z-index: 100;
+  z-index: 999;
   display: none;
 }
 .model-suggestions.show { display: block; }

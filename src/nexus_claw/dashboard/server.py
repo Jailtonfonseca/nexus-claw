@@ -61,7 +61,7 @@ class BroadcastMsg(BaseModel):
 class LLMSettingsModel(BaseModel):
     provider: str = "openai"
     model: str = "gpt-4o-mini"
-    api_key: str = ""
+    api_key: Optional[str] = None  # None = não alterar
     base_url: str = ""
     temperature: float = 0.7
     max_tokens: int = 4096
@@ -188,11 +188,12 @@ def _save_config_to_disk(config: NexusConfig):
     return saved
 
 
-def _model_to_llm_config(m: LLMSettingsModel) -> LLMConfig:
+def _model_to_llm_config(m) -> LLMConfig:
+    """Converte qualquer modelo Pydantic com campos LLM para LLMConfig."""
     return LLMConfig(
         provider=m.provider,
         model=m.model,
-        api_key=m.api_key or None,
+        api_key=getattr(m, 'api_key', None) or None,
         base_url=m.base_url or None,
         temperature=m.temperature,
         max_tokens=m.max_tokens,
@@ -238,8 +239,14 @@ async def update_config(data: FullConfigModel):
     config.log_level = data.log_level
     config.wake_interval_minutes = data.wake_interval_minutes
 
-    # LLM
-    config.llm = _model_to_llm_config(data.llm)
+    # LLM — só altera api_key se foi explicitamente enviada
+    if data.llm.api_key is not None:
+        config.llm.api_key = data.llm.api_key or None
+    config.llm.provider = data.llm.provider
+    config.llm.model = data.llm.model
+    config.llm.base_url = data.llm.base_url or None
+    config.llm.temperature = data.llm.temperature
+    config.llm.max_tokens = data.llm.max_tokens
 
     # Memory
     config.memory = _model_to_memory_config(data.memory)

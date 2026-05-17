@@ -365,7 +365,15 @@ function populateConfigForm(data) {
   if (data.llm) {
     el('cfg-llm-provider').value = data.llm.provider || 'openai';
     el('cfg-llm-model').value = data.llm.model || '';
-    el('cfg-llm-apikey').value = data.llm.api_key || '';
+    // API Key: coloca placeholder "salva" se houver key, nunca o valor mascarado
+    const apiKeyInput = el('cfg-llm-apikey');
+    if (data.llm.api_key && data.llm.api_key.includes('****')) {
+      apiKeyInput.value = '';
+      apiKeyInput.placeholder = '🔑 Chave já salva. Digite para substituir';
+    } else {
+      apiKeyInput.value = data.llm.api_key || '';
+      apiKeyInput.placeholder = 'sk-... ou leave empty for Ollama';
+    }
     el('cfg-llm-baseurl').value = data.llm.base_url || '';
     el('cfg-llm-temperature').value = data.llm.temperature || 0.7;
     el('cfg-llm-temp-value').textContent = data.llm.temperature || 0.7;
@@ -422,6 +430,13 @@ async function saveConfig() {
 
   try {
     const body = gatherConfig();
+
+    // Segurança: se o campo de API key está vazio e já havia uma chave salva,
+    // não envie string vazia (não sobrescreve a chave existente)
+    if (!body.llm.api_key && configData && configData.llm && configData.llm.api_key) {
+      delete body.llm.api_key;
+    }
+
     const result = await api('/api/config', 'PUT', body);
     el('config-status-msg').textContent = '✅ ' + (result.message || 'Salvo com sucesso!');
     configData = result.config;
@@ -452,8 +467,10 @@ function onLLMProviderChange() {
   const showBaseUrl = ['ollama', 'custom'].includes(provider);
 
   // Mostra/esconde campos
-  el('cfg-llm-apikey').closest('.form-group').style.display = showKey ? '' : 'none';
-  el('cfg-llm-baseurl').closest('.form-group').style.display = showBaseUrl ? '' : 'none';
+  const keyGroup = el('cfg-llm-apikey').closest('.form-group');
+  const urlGroup = el('cfg-llm-baseurl').closest('.form-group');
+  if (keyGroup) keyGroup.style.display = showKey ? '' : 'none';
+  if (urlGroup) urlGroup.style.display = showBaseUrl ? '' : 'none';
 
   // Sugestões de modelo
   const suggestions = MODEL_SUGGESTIONS[provider] || [];
@@ -469,13 +486,48 @@ function onLLMProviderChange() {
 }
 
 function setupModelSuggestions() {
-  // Esconde sugestões ao clicar fora
+  // Esconde sugestões ao clicar em qualquer lugar fora do campo de modelo
   document.addEventListener('click', (e) => {
     const container = el('model-suggestions');
-    if (!e.target.closest('#cfg-llm-model-group')) {
+    const modelInput = el('cfg-llm-model');
+    if (!e.target.closest('#cfg-llm-model-group') && !e.target.closest('.model-suggestions')) {
       container.classList.remove('show');
     }
   });
+
+  // Esconde ao mudar de foco do input de modelo
+  const modelInput = el('cfg-llm-model');
+  if (modelInput) {
+    modelInput.addEventListener('blur', () => {
+      setTimeout(() => el('model-suggestions').classList.remove('show'), 200);
+    });
+    modelInput.addEventListener('focus', () => {
+      const provider = el('cfg-llm-provider').value;
+      const suggestions = MODEL_SUGGESTIONS[provider] || [];
+      if (suggestions.length > 0) {
+        el('model-suggestions').classList.add('show');
+      }
+    });
+  }
+
+  // Esconde ao focar em QUALQUER outro input da config
+  document.querySelectorAll('.form-section input, .form-section select, .form-section textarea').forEach(input => {
+    if (input.id !== 'cfg-llm-model') {
+      input.addEventListener('focus', () => {
+        el('model-suggestions').classList.remove('show');
+      });
+    }
+  });
+
+  // Limpa o placeholder mascarado da API key ao focar no campo
+  const apiKeyInput = el('cfg-llm-apikey');
+  if (apiKeyInput) {
+    apiKeyInput.addEventListener('focus', function() {
+      if (this.value.includes('****')) {
+        this.value = '';
+      }
+    });
+  }
 }
 
 function selectModel(model) {
