@@ -138,6 +138,18 @@ def memory(
     asyncio.run(_show_memory())
 
 
+@app.command()
+def dashboard(
+    ctx: typer.Context,
+    port: int = typer.Option(8200, "--port", "-p", help="Porta do servidor"),
+    host: str = typer.Option("0.0.0.0", "--host", "-H", help="Interface de rede"),
+):
+    """Inicia o Dashboard Web do Orchestra."""
+    _setup_logging()
+    from nexus_claw.dashboard.server import main as dashboard_main
+    dashboard_main(host=host, port=port)
+
+
 async def _run_agent(
     agent: NexusAgent,
     task: Optional[str] = None,

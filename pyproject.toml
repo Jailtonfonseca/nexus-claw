@@ -46,12 +46,16 @@ docs = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.0.0",
 ]
+dashboard = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "websockets>=12.0",
+]
 all = [
-    "nexus-claw[dev,docs]",
+    "nexus-claw[dev,docs,dashboard]",
     "anthropic>=0.30.0",
     "discord.py>=2.3.0",
     "slack-sdk>=3.27.0",
-    "websockets>=12.0",
 ]
 
 [tool.setuptools.packages.find]

@@ -67,23 +67,101 @@ pip install -e ".[dev]"
 ```
 nexus-claw/
 ├── src/nexus_claw/
-│   ├── core/          # Agente principal e tipos
-│   │   ├── agent.py   # NexusAgent — coração do sistema
-│   │   └── types.py   # Task, TaskResult, AgentContext
-│   ├── memory/        # 🧠 Sistema de memória persistente
-│   │   ├── engine.py  # MemoryEngine — ciclo de vida da memória
-│   │   └── store.py   # FileMemoryStore — persistência em Markdown
-│   ├── llm/           # 🤖 Integração com LLMs
-│   │   └── client.py  # LLMClient — multi-provedor com fallback
-│   ├── skills/        # 🔌 Sistema de plugins
-│   │   └── __init__.py # SkillRegistry
-│   ├── config/        # ⚙️ Configuração
-│   │   └── settings.py # NexusConfig, load_config
-│   └── cli/           # 💻 Interface de linha de comando
-│       └── main.py    # CLI com Typer + Rich
+│   ├── core/            # Agente principal e tipos
+│   │   ├── agent.py     # NexusAgent — coração do sistema
+│   │   └── types.py     # Task, TaskResult, AgentContext
+│   ├── memory/          # 🧠 Sistema de memória persistente
+│   │   ├── engine.py    # MemoryEngine — ciclo de vida da memória
+│   │   └── store.py     # FileMemoryStore — persistência em Markdown
+│   ├── llm/             # 🤖 Integração com LLMs
+│   │   └── client.py    # LLMClient — multi-provedor com fallback
+│   ├── skills/          # 🔌 Sistema de plugins
+│   │   └── __init__.py  # SkillRegistry
+│   ├── config/          # ⚙️ Configuração
+│   │   └── settings.py  # NexusConfig, load_config
+│   ├── orchestra/       # 🎪 Multi-Agent Orchestration
+│   │   ├── orchestrator.py  # OrchestratorAgent — CEO digital
+│   │   ├── worker.py        # WorkerAgent — agentes independentes
+│   │   └── registry.py      # AgentRegistry — registro persistente
+│   ├── dashboard/       # 🌐 Web Dashboard
+│   │   ├── server.py    # FastAPI + WebSocket
+│   │   └── static/      # HTML/CSS/JS frontend
+│   └── cli/             # 💻 Interface de linha de comando
+│       └── main.py      # CLI com Typer + Rich
 ├── pyproject.toml
 └── README.md
 ```
+
+## 🎪 Multi-Agent Orchestra
+
+O NexusClaw possui um sistema de **orquestração multi-agente** que permite gerenciar múltiplos workers autônomos.
+
+### Conceitos
+
+| Componente | Descrição |
+|-----------|-----------|
+| 🎪 **OrchestratorAgent** | CEO digital — gerencia workers, delega tarefas, coordena comunicação |
+| 🤖 **WorkerAgent** | Agente independente com memória própria e capacidade de ação |
+| 📋 **AgentRegistry** | Registro persistente de todos os agentes no sistema |
+
+### Workers
+
+Cada Worker possui:
+- 🧠 **Memória persistente** própria
+- 🎭 **Papel/função** definida (analyst, creator, assistant...)
+- ⚡ **Modo autônomo** — decide o que fazer sem supervisão
+- 🔒 **Isolamento** — cada worker tem seu próprio contexto e histórico
+
+### Uso via CLI
+
+```bash
+# Iniciar o Orchestrator com workers padrão
+nexus orchestra --workers 3
+
+# Listar workers e status
+nexus orchestra status
+
+# Delegar tarefa específica para um worker
+nexus orchestra task "Pesquise tendências de IA" --role analyst
+```
+
+## 🌐 Web Dashboard
+
+Interface web para gerenciar o sistema de orquestração visualmente.
+
+```bash
+# Instalar com dependências do dashboard
+pip install "nexus-claw[dashboard]"
+
+# Iniciar o dashboard
+nexus dashboard
+# Acesse: http://localhost:8200
+
+# Porta customizada
+nexus dashboard --port 8080 --host 127.0.0.1
+```
+
+### Funcionalidades do Dashboard
+
+- 📊 **Status em tempo real** via WebSocket
+- 🤖 **Gerenciar Workers**: criar, pausar, retomar, remover
+- 📋 **Delegar tarefas** para workers específicos
+- 🧠 **Consultar memória** de cada worker
+- 📢 **Broadcast** de mensagens para todos os workers
+- 🔄 **Auto-refresh** a cada 5 segundos
+
+### API REST
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/status` | Status completo do sistema |
+| POST | `/api/workers` | Criar novo worker |
+| DELETE | `/api/workers/{id}` | Remover worker |
+| POST | `/api/workers/{id}/pause` | Pausar worker |
+| POST | `/api/workers/{id}/resume` | Retomar worker |
+| GET | `/api/workers/{id}/memory` | Memória do worker |
+| POST | `/api/tasks` | Delegar tarefa |
+| POST | `/api/broadcast` | Broadcast para workers |
 
 ## 🧠 Sistema de Memória
 

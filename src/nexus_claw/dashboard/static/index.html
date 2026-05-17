@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusClaw Orchestra</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon">🦀</span>
+      <div class="logo-text">
+        <strong>NexusClaw</strong>
+        <small>Orchestra</small>
+      </div>
+    </div>
+
+    <nav>
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <span>📊</span> Dashboard
+      </a>
+      <a href="#" class="nav-item" data-view="workers">
+        <span>🤖</span> Workers
+        <span class="badge" id="worker-count">0</span>
+      </a>
+      <a href="#" class="nav-item" data-view="tasks">
+        <span>📋</span> Tarefas
+        <span class="badge" id="task-count">0</span>
+      </a>
+      <a href="#" class="nav-item" data-view="memory">
+        <span>🧠</span> Memória
+      </a>
+      <a href="#" class="nav-item" data-view="settings">
+        <span>⚙️</span> Config
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-dot" id="orchestrator-status"></div>
+      <span id="orchestrator-label">Inicializando...</span>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="topbar">
+      <h1 id="view-title">Dashboard</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="showModal('new-worker')">+ Novo Worker</button>
+        <button class="btn btn-secondary" onclick="showModal('new-task')">+ Nova Tarefa</button>
+        <button class="btn btn-icon" onclick="refreshStatus()" title="Atualizar">🔄</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Dashboard View -->
+      <div class="view active" id="view-dashboard">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🤖</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-workers">0</span>
+              <span class="stat-label">Workers</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-completed">0</span>
+              <span class="stat-label">Tasks Completas</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-queue">0</span>
+              <span class="stat-label">Na Fila</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-active">0</span>
+              <span class="stat-label">Ativos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🤖 Workers Ativos</h3>
+          <div class="workers-grid" id="workers-grid-dash"></div>
+        </div>
+
+        <div class="card">
+          <h3>📋 Últimas Tarefas</h3>
+          <div class="table-container">
+            <table id="tasks-table">
+              <thead>
+                <tr>
+                  <th>Tarefa</th>
+                  <th>Worker</th>
+                  <th>Status</th>
+                  <th>Quando</th>
+                </tr>
+              </thead>
+              <tbody id="tasks-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workers View -->
+      <div class="view" id="view-workers">
+        <div class="workers-grid" id="workers-grid-full"></div>
+      </div>
+
+      <!-- Tasks View -->
+      <div class="view" id="view-tasks">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Descrição</th>
+                <th>Worker</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th>Criado</th>
+              </tr>
+            </thead>
+            <tbody id="tasks-full-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Memory View -->
+      <div class="view" id="view-memory">
+        <div class="card">
+          <h3>🧠 Memória dos Workers</h3>
+          <div class="form-row">
+            <select id="memory-worker-select" onchange="loadMemory()">
+              <option value="">Selecione um worker...</option>
+            </select>
+            <select id="memory-category-select" onchange="loadMemory()">
+              <option value="short_term">Curto Prazo</option>
+              <option value="long_term">Longo Prazo</option>
+              <option value="core">Core</option>
+            </select>
+            <button class="btn btn-secondary" onclick="loadMemory()">Carregar</button>
+          </div>
+          <div id="memory-content"></div>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div class="view" id="view-settings">
+        <div class="card">
+          <h3>⚙️ Configuração</h3>
+          <div class="config-section">
+            <label>Broadcast para todos os workers</label>
+            <div class="form-row">
+              <input type="text" id="broadcast-input" placeholder="Mensagem para todos os workers...">
+              <button class="btn btn-primary" onclick="broadcast()">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 id="modal-title">Novo</h2>
+        <button class="btn-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
