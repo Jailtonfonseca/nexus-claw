@@ -1,0 +1,21 @@
+# NexusClaw - Exemplo de Configuração
+# Copie para ~/.nexus/config.yml e ajuste
+
+nexus:
+  name: "Nexus"
+  log_level: "INFO"
+  wake_interval_minutes: 30  # Intervalo entre ciclos no modo daemon
+
+llm:
+  provider: "openai"  # openai | anthropic | ollama | custom
+  model: "gpt-4o-mini"
+  api_key: "${OPENAI_API_KEY}"  # Ou coloque a key diretamente
+  # base_url: "http://localhost:11434/v1"  # Para Ollama
+  temperature: 0.7
+  max_tokens: 4096
+
+memory:
+  backend: "file"  # file | chroma
+  base_dir: "~/.nexus/memory"
+  auto_summarize: true
+  max_context_files: 50
