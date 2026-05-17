@@ -31,7 +31,7 @@ class MemoryEngine:
 
     def __init__(self, config: MemoryConfig):
         self.config = config
-        self.store = FileMemoryStore(Path(config.base_dir))
+        self._store_backend = FileMemoryStore(Path(config.base_dir))
         self._categories: dict[str, MemoryCategory] = {}
         self._vector_index = None
 
@@ -75,7 +75,7 @@ class MemoryEngine:
             timestamp=datetime.utcnow().isoformat(),
         )
 
-        await self.store.write(item)
+        await self._store_backend.write(item)
         await self._update_index(item)
         logger.debug(f"📝 Memória salva: {category}/{item.id}")
         return item
@@ -104,7 +104,7 @@ class MemoryEngine:
         cat = self._categories.get(category)
         if not cat:
             return []
-        items = await self.store.list(cat.path, limit=limit)
+        items = await self._store_backend.list(cat.path, limit=limit)
         return [item.content for item in items]
 
     async def summarize(self, category: str) -> Optional[str]:
@@ -113,7 +113,7 @@ class MemoryEngine:
         Útil para compressão de contexto antes de poda.
         (A implementação do LLM será adicionada na v0.2)
         """
-        items = await self.store.list(
+        items = await self._store_backend.list(
             self._categories[category].path,
             limit=100,
         )
@@ -136,7 +136,7 @@ class MemoryEngine:
         cats = [category] if category else self._categories
         for cat_name in cats:
             cat = self._categories[cat_name]
-            items = await self.store.list(cat.path, limit=50)
+            items = await self._store_backend.list(cat.path, limit=50)
             for item in items:
                 content_lower = item.content.lower()
                 # Score baseado em quantas palavras do query aparecem
